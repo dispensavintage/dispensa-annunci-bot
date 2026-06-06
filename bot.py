@@ -7,6 +7,7 @@ from email.header import decode_header
 STORE = "f64efc-d9.myshopify.com"
 API = "2025-01"
 ANNUNCI_COLLECTION = "gid://shopify/Collection/520816099596"
+ONLINE_PUB = "gid://shopify/Publication/159418745100"  # canale Negozio online
 SUBJECT_MATCH = "Vendi un oggetto"
 LABELS = ["Nome","Email","Immagine 1","Immagine 2","Immagine 3","Titolo",
           "Descrivi il tuo articolo","Categoria","Condizioni","Prezzo","Città","Citta"]
@@ -77,6 +78,8 @@ def create_listing(token, f, img_urls):
     gql(token,"""mutation A($id:ID!,$p:[ID!]!){collectionAddProducts(id:$id,productIds:$p){userErrors{message}}}""",{"id":ANNUNCI_COLLECTION,"p":[pid]})
     ua = gql(token,'{collections(first:1,query:"title:Ultimi Arrivi"){nodes{id}}}')["data"]["collections"]["nodes"]
     if ua: gql(token,"""mutation R($id:ID!,$p:[ID!]!){collectionRemoveProducts(id:$id,productIds:$p){userErrors{message}}}""",{"id":ua[0]["id"],"p":[pid]})
+    # pubblica sul canale Negozio online (cosi appare quando lo attivi)
+    gql(token,"""mutation Pub($id:ID!,$inp:[PublicationInput!]!){publishablePublish(id:$id,input:$inp){userErrors{message}}}""",{"id":pid,"inp":[{"publicationId":ONLINE_PUB}]})
     return num, title
 
 # ---------- Email ----------
