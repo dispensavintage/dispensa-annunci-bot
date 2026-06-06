@@ -1,0 +1,21 @@
+name: Crea annunci da submission
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Esegui bot annunci
+        env:
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          IMAP_HOST: ${{ secrets.IMAP_HOST }}
+          IMAP_USER: ${{ secrets.IMAP_USER }}
+          IMAP_PASSWORD: ${{ secrets.IMAP_PASSWORD }}
+        run: python bot.py
