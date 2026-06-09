@@ -1,0 +1,26 @@
+name: Posta prodotto su Telegram
+on:
+  schedule:
+    - cron: "0 6 * * *"     # 08:00 IT
+    - cron: "30 8 * * *"    # 10:30 IT
+    - cron: "0 11 * * *"    # 13:00 IT
+    - cron: "30 13 * * *"   # 15:30 IT
+    - cron: "0 16 * * *"    # 18:00 IT
+    - cron: "30 18 * * *"   # 20:30 IT
+    - cron: "0 21 * * *"    # 23:00 IT
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Posta prodotto a caso su Telegram
+        env:
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ secrets.TELEGRAM_CHANNEL }}
+        run: python telegram_poster.py
