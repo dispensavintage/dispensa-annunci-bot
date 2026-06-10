@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Posta sul canale Telegram un contenuto a caso di Dispensa Vintage:
-un PRODOTTO del negozio (~70%) oppure un ARTICOLO del blog (~30%).
+un PRODOTTO del negozio (~85%) oppure un ARTICOLO del blog (~15%, escluso "Eventi e Fiere").
 Esclude annunci privati degli utenti (tag 'annunci' / vendor 'Annuncio privato'),
 negozi, buoni regalo. Env: SHOPIFY_STORE, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET,
 TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL. Solo libreria standard (gira su GitHub Actions)."""
@@ -14,7 +14,8 @@ SITE = "https://dispensavintage.it"
 EXCLUDE_TYPES = {"Negozi vintage", "Annuncio privato", "Annunci", "Buoni regalo"}
 EXCLUDE_TAGS = {"annunci"}                 # convenzione annunci utente (vedi memoria)
 EXCLUDE_VENDORS = {"Annuncio privato"}
-ARTICLE_PROB = 0.30                        # quota di post che sono articoli del blog
+ARTICLE_PROB = 0.15                        # quota di post che sono articoli (resto = prodotti)
+EXCLUDE_BLOGS = {"eventi-e-fiere"}         # blog da NON postare (eventi con date passate)
 
 FOOTER = (
     "\n\n- - - - - - - - - - \n"
@@ -95,7 +96,7 @@ def pick_article(token):
             nodes{title handle isPublished image{url} summary blog{handle}}}}''',
             {"c": cur})["data"]["articles"]
         for n in d["nodes"]:
-            if n.get("isPublished") and n.get("blog"):
+            if n.get("isPublished") and n.get("blog") and n["blog"]["handle"] not in EXCLUDE_BLOGS:
                 arts.append(n)
         if d["pageInfo"]["hasNextPage"]: cur = d["pageInfo"]["endCursor"]
         else: break
