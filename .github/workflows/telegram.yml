@@ -1,14 +1,19 @@
 name: Posta prodotto su Telegram
+
 on:
+  # Ogni 2,5 ore dalle 8 alle 23 (ora italiana). GitHub usa UTC: orari = ora IT - 2 (estate CEST).
+  # In inverno (CET) i post slittano 1h prima (7:00–22:00), comunque nella fascia diurna.
+  # NB: minuti "fuori picco" (:13/:43) per ridurre i ritardi/salti di GitHub (peggiori a :00 e :30).
   schedule:
-    - cron: "0 6 * * *"     # 08:00 IT
-    - cron: "30 8 * * *"    # 10:30 IT
-    - cron: "0 11 * * *"    # 13:00 IT
-    - cron: "30 13 * * *"   # 15:30 IT
-    - cron: "0 16 * * *"    # 18:00 IT
-    - cron: "30 18 * * *"   # 20:30 IT
-    - cron: "0 21 * * *"    # 23:00 IT
-  workflow_dispatch: {}
+    - cron: "13 6 * * *"    # 08:13 IT
+    - cron: "43 8 * * *"    # 10:43 IT
+    - cron: "13 11 * * *"   # 13:13 IT
+    - cron: "43 13 * * *"   # 15:43 IT
+    - cron: "13 16 * * *"   # 18:13 IT
+    - cron: "43 18 * * *"   # 20:43 IT
+    - cron: "13 21 * * *"   # 23:13 IT
+  workflow_dispatch: {}     # avvio manuale dal tab Actions
+
 jobs:
   run:
     runs-on: ubuntu-latest
