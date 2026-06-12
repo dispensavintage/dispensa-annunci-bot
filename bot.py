@@ -5,7 +5,7 @@ import os, re, ssl, json, html, imaplib, email, urllib.request
 from email.header import decode_header
 
 STORE = "f64efc-d9.myshopify.com"
-API = "2025-01"
+API = "2025-10"
 ANNUNCI_COLLECTION = "gid://shopify/Collection/520816099596"
 ONLINE_PUB = "gid://shopify/Publication/159418745100"  # canale Negozio online
 SUBJECT_MATCH = "Vendi un oggetto"
