@@ -7,7 +7,7 @@ TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL. Solo libreria standard (gira su GitHub Act
 import os, json, random, re, urllib.request, urllib.parse, html
 
 STORE = os.environ.get("SHOPIFY_STORE", "f64efc-d9.myshopify.com")
-API = f"https://{STORE}/admin/api/2025-01/graphql.json"
+API = f"https://{STORE}/admin/api/2025-10/graphql.json"
 SITE = "https://dispensavintage.it"
 
 # --- esclusioni prodotti ---
