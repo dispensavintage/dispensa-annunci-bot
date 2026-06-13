@@ -8,6 +8,11 @@ STORE = "f64efc-d9.myshopify.com"
 API = "2025-10"
 ANNUNCI_COLLECTION = "gid://shopify/Collection/520816099596"
 ONLINE_PUB = "gid://shopify/Publication/159418745100"  # canale Negozio online
+GOOGLE_PUB = "gid://shopify/Publication/159497814284"  # canale Google & YouTube (gli annunci NON ci devono finire)
+ULTIMI_ARRIVI = "gid://shopify/Collection/517664309516"  # collezione mostrata in home
+# destinatari Google da escludere (Merchant): evita che gli annunci finiscano nel feed -> rischio ban
+GOOGLE_EXCLUDE_DEST = ["Shopping_ads","Buy_on_Google_listings","Display_ads","Local_inventory_ads",
+                       "Free_listings","Free_local_listings","YouTube_Shopping"]
 SUBJECT_MATCH = "Vendi un oggetto"
 LABELS = ["Nome","Email","Immagine 1","Immagine 2","Immagine 3","Titolo",
           "Descrivi il tuo articolo","Categoria","Condizioni","Prezzo","Città","Citta"]
@@ -63,6 +68,9 @@ def create_listing(token, f, img_urls):
     if cond: mf.append({"namespace":"custom","key":"condizione","type":"single_line_text_field","value":cond})
     if citta: mf.append({"namespace":"custom","key":"citta","type":"single_line_text_field","value":citta})
     mf = [m for m in mf if m["value"]]
+    # esclude l'annuncio da Google/Merchant fin dalla creazione (nasce escluso)
+    mf.append({"namespace":"mm-google-shopping","key":"excluded_destination",
+               "type":"list.single_line_text_field","value":json.dumps(GOOGLE_EXCLUDE_DEST)})
     pin = {"title":title,"descriptionHtml":body,"productType":cat,"vendor":"Annuncio privato",
            "tags":["annunci"]+([cat] if cat else []),"status":"DRAFT","templateSuffix":"annuncio",
            "seo":{"title":st,"description":sd},"metafields":mf}
@@ -80,6 +88,8 @@ def create_listing(token, f, img_urls):
     if ua: gql(token,"""mutation R($id:ID!,$p:[ID!]!){collectionRemoveProducts(id:$id,productIds:$p){userErrors{message}}}""",{"id":ua[0]["id"],"p":[pid]})
     # pubblica sul canale Negozio online (cosi appare quando lo attivi)
     gql(token,"""mutation Pub($id:ID!,$inp:[PublicationInput!]!){publishablePublish(id:$id,input:$inp){userErrors{message}}}""",{"id":pid,"inp":[{"publicationId":ONLINE_PUB}]})
+    # difensivo: rimuove l'annuncio dal canale Google & YouTube (in caso di auto-add nuovi prodotti) -> niente Merchant
+    gql(token,"""mutation Unp($id:ID!,$inp:[PublicationInput!]!){publishableUnpublish(id:$id,input:$inp){userErrors{message}}}""",{"id":pid,"inp":[{"publicationId":GOOGLE_PUB}]})
     return num, title
 
 # ---------- Email ----------
@@ -113,8 +123,23 @@ def parse_fields(text):
     seen=set(); gids=[g for g in gids if not (g in seen or seen.add(g))]
     return f, gids
 
+def cleanup_ultimi_arrivi(token):
+    cur=None; remove=[]
+    while True:
+        d=gql(token,'query($id:ID!,$c:String){collection(id:$id){products(first:100,after:$c){pageInfo{hasNextPage endCursor} nodes{id tags}}}}',{"id":ULTIMI_ARRIVI,"c":cur})["data"]["collection"]["products"]
+        for p in d["nodes"]:
+            if "annunci" in [t.lower() for t in p["tags"]]: remove.append(p["id"])
+        if not d["pageInfo"]["hasNextPage"]: break
+        cur=d["pageInfo"]["endCursor"]
+    if remove:
+        gql(token,"""mutation R($id:ID!,$p:[ID!]!){collectionRemoveProducts(id:$id,productIds:$p){userErrors{message}}}""",{"id":ULTIMI_ARRIVI,"p":remove})
+        print(f"Pulizia Ultimi Arrivi: rimossi {len(remove)} annunci")
+    else:
+        print("Pulizia Ultimi Arrivi: nessun annuncio da rimuovere")
+
 def main():
     token = get_token()
+    cleanup_ultimi_arrivi(token)
     M = imaplib.IMAP4_SSL(env("IMAP_HOST"))
     M.login(env("IMAP_USER"), env("IMAP_PASSWORD"))
     M.select("INBOX")
