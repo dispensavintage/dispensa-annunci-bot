@@ -192,13 +192,18 @@ def tg(method, payload):
         data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
     return json.load(urllib.request.urlopen(req))
 
-def send(chat, caption, img, button):
+def send(chat, caption, img, button, preview_url=None):
     markup = {"inline_keyboard": [[{"text": button[0], "url": button[1]}]]} if button else None
     if img:
         payload = {"chat_id": chat, "photo": img, "caption": caption[:1024], "parse_mode": "HTML"}
         if markup: payload["reply_markup"] = markup
         return tg("sendPhoto", payload)
-    payload = {"chat_id": chat, "text": caption, "parse_mode": "HTML", "disable_web_page_preview": False}
+    payload = {"chat_id": chat, "text": caption, "parse_mode": "HTML"}
+    if preview_url:
+        # anteprima immagine GRANDE e sopra il testo (Telegram prende la foto dal link, in modo conforme)
+        payload["link_preview_options"] = {"url": preview_url, "prefer_large_media": True, "show_above_text": True}
+    else:
+        payload["link_preview_options"] = {"is_disabled": True}
     if markup: payload["reply_markup"] = markup
     return tg("sendMessage", payload)
 
@@ -230,7 +235,8 @@ def main():
         return
 
     chat = os.environ["TELEGRAM_CHANNEL"]
-    r = send(chat, caption, img, button)
+    preview = item["url"] if kind == "affiliate" else None
+    r = send(chat, caption, img, button, preview)
     print("OK" if r.get("ok") else "ERRORE", f"[{kind}] ->", item["title"], "| tg:", r.get("ok"), r.get("description", ""))
 
 if __name__ == "__main__":
