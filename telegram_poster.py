@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Posta sul canale Telegram un contenuto a caso di Dispensa Vintage:
-- PRODOTTO del negozio (~60%)
-- GUIDA del blog (~30%, dai blog monetizzanti: collezionismo/guide/restauro-e-idee/tecnologia-vintage/stile-design)
-- PRODOTTO AFFILIATO Amazon (~10%, selezione curata a tema collezionismo, con disclosure)
+"""Posta sul canale Telegram un contenuto di Dispensa Vintage.
+
+MODALITA NORMALE (default): PRODOTTO del negozio (~70%) o GUIDA del blog (~30%),
+con bottone "Vedi su Dispensa Vintage".
+MODALITA AFFILIATI (env POST_MODE=affiliate): un PRODOTTO AFFILIATO Amazon dalla
+selezione curata, con anteprima immagine + bottone "Acquista su Amazon" + disclosure.
+Cosi puoi schedulare separatamente i post affiliati (es. 4-5/giorno) senza toccare il resto.
+
 Esclude annunci privati (tag 'annunci' / vendor 'Annuncio privato'), negozi, buoni regalo.
 Env: SHOPIFY_STORE, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL.
-DRY_RUN=1 -> stampa i post senza inviarli (per test). Solo libreria standard (gira su GitHub Actions)."""
+DRY_RUN=1 -> stampa i post senza inviarli. Solo libreria standard (gira su GitHub Actions)."""
 import os, json, random, re, urllib.request, urllib.parse, html
 
 STORE = os.environ.get("SHOPIFY_STORE", "f64efc-d9.myshopify.com")
@@ -14,17 +18,13 @@ SITE = "https://dispensavintage.it"
 
 # --- esclusioni prodotti ---
 EXCLUDE_TYPES = {"Negozi vintage", "Annuncio privato", "Annunci", "Buoni regalo"}
-EXCLUDE_TAGS = {"annunci"}                 # convenzione annunci utente (vedi memoria)
+EXCLUDE_TAGS = {"annunci"}
 EXCLUDE_VENDORS = {"Annuncio privato"}
 
-# --- mix dei contenuti (le probabilita' devono sommare a <=1; il resto = prodotti negozio) ---
-AFFILIATE_PROB = 0.10                       # quota post = prodotto affiliato Amazon
-GUIDE_PROB = 0.30                           # quota post = guida del blog
-# prodotti negozio = 1 - AFFILIATE_PROB - GUIDE_PROB (~0.60)
-
-# guide: pesca in via prioritaria da questi blog (contenuti monetizzanti); fallback a tutti i pubblicati
+# --- modalita normale: quota guide (resto = prodotti). Gli affiliati hanno un flusso dedicato (POST_MODE=affiliate). ---
+GUIDE_PROB = 0.30
 MONEY_BLOGS = {"collezionismo", "guide", "restauro-e-idee", "tecnologia-vintage", "stile-design"}
-EXCLUDE_BLOGS = {"eventi-e-fiere"}          # blog da NON postare mai (eventi con date passate)
+EXCLUDE_BLOGS = {"eventi-e-fiere"}
 
 # --- selezione affiliata curata (nome, beneficio, short link Amazon con tag incorporato) ---
 AFFILIATE = [
@@ -56,15 +56,22 @@ AFFILIATE = [
     ("Colla specifica per ceramica e porcellana", "Ripara con precisione ceramiche e porcellane.", "https://link.amazon/B0enPFEql"),
     ("Scanner per foto, diapositive e negativi", "Digitalizza e salva le vecchie fotografie di famiglia.", "https://link.amazon/B0aCMTDki"),
     ("Panno per lucidare l'oro e i gioielli", "Ravviva oro e gioielli senza abrasivi.", "https://link.amazon/B04cOxYkA"),
+    ("Pile a bottone assortite", "Per far ripartire orologi e sveglie al quarzo.", "https://link.amazon/B0bd6bUwo"),
+    ("Kit attrezzi da orologiaio", "Per aprire il fondello e cambiare pila o cinturino in sicurezza.", "https://link.amazon/B0eUuwSWi"),
+    ("Panno in microfibra per orologi", "Per lucidare cassa e vetro senza graffiare.", "https://link.amazon/B09OZHnH2"),
+    ("Rullino pellicola 35mm", "Per tornare a scattare con le fotocamere analogiche.", "https://link.amazon/B01C8dsbF"),
+    ("Kit pulizia obiettivi fotografici", "Soffietto e panno per togliere la polvere da lenti e corpo macchina.", "https://link.amazon/B0cnQIKt4"),
+    ("Borsa/custodia per fotocamera", "Per proteggere la macchina da urti, polvere e umidita.", "https://link.amazon/B0fFlb7Ga"),
+    ("Ganci per appendere quadri e targhe pesanti", "Per esporre targhe in metallo in sicurezza, senza cadute.", "https://link.amazon/B03O6iT9i"),
 ]
 
 FOOTER = (
     "\n\n- - - - - - - - - - \n"
-    "🥰 Seguici anche su Instagram!\n"
-    "👉 https://www.instagram.com/dispensa.vintage/\n\n"
+    "ü•∞ Seguici anche su Instagram!\n"
+    "üëâ https://www.instagram.com/dispensa.vintage/\n\n"
     "- - - - - - - - - - \n"
-    "➡️ Scarica l'app per iPhone su App Store\n"
-    "👉 https://apps.apple.com/it/app/dispensa-vintage/id6754877811"
+    "‚û°Ô∏è Scarica l'app per iPhone su App Store\n"
+    "üëâ https://apps.apple.com/it/app/dispensa-vintage/id6754877811"
 )
 
 def get_token():
@@ -84,7 +91,7 @@ def gql(token, query, variables=None):
 def clip(text, n=180, fallback=""):
     text = " ".join(re.sub("<[^>]+>", " ", text or "").split())
     if len(text) > n:
-        text = text[:n].rsplit(" ", 1)[0] + "…"
+        text = text[:n].rsplit(" ", 1)[0] + "‚Ä¶"
     return text or fallback
 
 # ---------- PRODOTTI NEGOZIO ----------
@@ -117,16 +124,16 @@ def build_product(p):
     desc = clip((p.get("seo") or {}).get("description") or p.get("description"),
                 fallback="Un pezzo vintage selezionato per te.")
     if price and cmp and float(cmp) > float(price):
-        offer = f"🔥 In offerta: <s>{float(cmp):.0f}€</s> → <b>{float(price):.0f}€</b>"
+        offer = f"üî• In offerta: <s>{float(cmp):.0f}‚Ç¨</s> ‚Üí <b>{float(price):.0f}‚Ç¨</b>"
     elif price:
-        offer = f"🔥 Disponibile ora a <b>{float(price):.0f}€</b>"
+        offer = f"üî• Disponibile ora a <b>{float(price):.0f}‚Ç¨</b>"
     else:
-        offer = "🔥 Disponibile ora!"
-    caption = (f"🟥 <b>{html.escape(title, quote=False)}</b>\n"
-               f"⭐ {html.escape(desc, quote=False)}\n\n"
+        offer = "üî• Disponibile ora!"
+    caption = (f"üü• <b>{html.escape(title, quote=False)}</b>\n"
+               f"‚≠ê {html.escape(desc, quote=False)}\n\n"
                f"{offer}\n"
-               f"✅ {url}" + FOOTER)
-    return caption, img
+               f"‚úÖ {url}" + FOOTER)
+    return caption, img, ("üí• Vedi su Dispensa Vintage üí•", url)
 
 # ---------- GUIDE BLOG ----------
 def pick_guide(token):
@@ -151,11 +158,11 @@ def build_guide(a):
     url = f"{SITE}/blogs/{a['blog']['handle']}/{a['handle']}"
     img = (a.get("image") or {}).get("url")
     summ = clip(a.get("summary"), fallback="Un approfondimento dal nostro blog vintage.")
-    caption = (f"📖 <b>{html.escape(title, quote=False)}</b>\n"
-               f"⭐ {html.escape(summ, quote=False)}\n\n"
-               f"📚 Leggi la guida completa sul blog 👇\n"
-               f"✅ {url}" + FOOTER)
-    return caption, img
+    caption = (f"üìñ <b>{html.escape(title, quote=False)}</b>\n"
+               f"‚≠ê {html.escape(summ, quote=False)}\n\n"
+               f"üìö Leggi la guida completa sul blog üëá\n"
+               f"‚úÖ {url}" + FOOTER)
+    return caption, img, ("üìñ Leggi la guida", url)
 
 # ---------- PRODOTTI AFFILIATI AMAZON ----------
 def pick_affiliate():
@@ -163,12 +170,13 @@ def pick_affiliate():
     return {"title": name, "benefit": benefit, "url": url}
 
 def build_affiliate(a):
-    caption = (f"🛒 <b>{html.escape(a['title'], quote=False)}</b>\n"
-               f"⭐ {html.escape(a['benefit'], quote=False)}\n\n"
-               f"💡 Un consiglio utile per curare e custodire i tuoi pezzi vintage.\n"
-               f"✅ {a['url']}\n"
-               f"<i>🔖 Link affiliato Amazon</i>" + FOOTER)
-    return caption, None  # niente immagine: Telegram genera l'anteprima dal link Amazon
+    caption = (f"üõí <b>{html.escape(a['title'], quote=False)}</b>\n"
+               f"‚≠ê {html.escape(a['benefit'], quote=False)}\n\n"
+               f"üí° Prezzo e disponibilita cambiano spesso su Amazon: controlla l'offerta attuale üëá\n"
+               f"‚úÖ {a['url']}\n"
+               f"<i>üîñ Link affiliato Amazon</i>" + FOOTER)
+    # img=None -> sendMessage con anteprima automatica (immagine presa da Amazon in modo conforme)
+    return caption, None, ("üõí Acquista su Amazon", a['url'])
 
 # ---------- TELEGRAM ----------
 def tg(method, payload):
@@ -177,37 +185,45 @@ def tg(method, payload):
         data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
     return json.load(urllib.request.urlopen(req))
 
+def send(chat, caption, img, button):
+    markup = {"inline_keyboard": [[{"text": button[0], "url": button[1]}]]} if button else None
+    if img:
+        payload = {"chat_id": chat, "photo": img, "caption": caption[:1024], "parse_mode": "HTML"}
+        if markup: payload["reply_markup"] = markup
+        return tg("sendPhoto", payload)
+    payload = {"chat_id": chat, "text": caption, "parse_mode": "HTML", "disable_web_page_preview": False}
+    if markup: payload["reply_markup"] = markup
+    return tg("sendMessage", payload)
+
 def main():
     token = get_token()
-    r = random.random()
+    mode = os.environ.get("POST_MODE", "")
     kind, item = None, None
-    if r < AFFILIATE_PROB:
+    if mode == "affiliate":
         item = pick_affiliate(); kind = "affiliate"
-    elif r < AFFILIATE_PROB + GUIDE_PROB:
-        item = pick_guide(token)
-        if item: kind = "guide"
-    if item is None:
-        item = pick_product(token)
-        if item: kind = "product"
+    else:
+        if random.random() < GUIDE_PROB:
+            item = pick_guide(token)
+            if item: kind = "guide"
+        if item is None:
+            item = pick_product(token)
+            if item: kind = "product"
     if item is None:
         print("Nessun contenuto disponibile."); return
 
     if kind == "affiliate":
-        caption, img = build_affiliate(item)
+        caption, img, button = build_affiliate(item)
     elif kind == "guide":
-        caption, img = build_guide(item)
+        caption, img, button = build_guide(item)
     else:
-        caption, img = build_product(item)
+        caption, img, button = build_product(item)
 
     if os.environ.get("DRY_RUN"):
-        print(f"--- DRY_RUN [{kind}] -> {item['title']} ---\n{caption}\n(img: {img})")
+        print(f"--- DRY_RUN [{kind}] -> {item['title']} ---\n{caption}\n(img: {img})\n(button: {button})")
         return
 
     chat = os.environ["TELEGRAM_CHANNEL"]
-    if img:
-        r = tg("sendPhoto", {"chat_id": chat, "photo": img, "caption": caption[:1024], "parse_mode": "HTML"})
-    else:
-        r = tg("sendMessage", {"chat_id": chat, "text": caption, "parse_mode": "HTML", "disable_web_page_preview": False})
+    r = send(chat, caption, img, button)
     print("OK" if r.get("ok") else "ERRORE", f"[{kind}] ->", item["title"], "| tg:", r.get("ok"), r.get("description", ""))
 
 if __name__ == "__main__":
