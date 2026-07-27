@@ -5,9 +5,10 @@ MODALITA NORMALE (default): PRODOTTO del negozio (~70%) o GUIDA del blog (~30%),
 con bottone "Vedi su Dispensa Vintage".
 MODALITA AFFILIATI (env POST_MODE=affiliate): un PRODOTTO AFFILIATO Amazon dalla
 selezione curata, con anteprima immagine + bottone "Acquista su Amazon" + disclosure.
-Cosi puoi schedulare separatamente i post affiliati (es. 4-5/giorno) senza toccare il resto.
 
-Esclude annunci privati (tag 'annunci' / vendor 'Annuncio privato'), negozi, buoni regalo.
+Le emoji sono scritte come escape ASCII (\\Uxxxxxxxx) cosi il file resta puro ASCII
+ed e' immune alla corruzione di codifica quando si incolla su GitHub.
+
 Env: SHOPIFY_STORE, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL.
 DRY_RUN=1 -> stampa i post senza inviarli. Solo libreria standard (gira su GitHub Actions)."""
 import os, json, random, re, urllib.request, urllib.parse, html
@@ -15,6 +16,12 @@ import os, json, random, re, urllib.request, urllib.parse, html
 STORE = os.environ.get("SHOPIFY_STORE", "f64efc-d9.myshopify.com")
 API = f"https://{STORE}/admin/api/2025-10/graphql.json"
 SITE = "https://dispensavintage.it"
+
+# --- emoji/simboli come escape ASCII (immuni alla corruzione di codifica) ---
+RED    = "\U0001F7E5"; STAR  = "\U00002B50"; FIRE  = "\U0001F525"; CHECK = "\U00002705"
+BOOM   = "\U0001F4A5"; BOOK  = "\U0001F4D6"; BOOKS = "\U0001F4DA"; CART  = "\U0001F6D2"
+BULB   = "\U0001F4A1"; BMARK = "\U0001F516"; LOVE  = "\U0001F970"; POINT = "\U0001F449"
+DOWN   = "\U0001F447"; ARROWR = "\U000027A1\U0000FE0F"; EUR = "\U000020AC"; TO = "\U00002192"
 
 # --- esclusioni prodotti ---
 EXCLUDE_TYPES = {"Negozi vintage", "Annuncio privato", "Annunci", "Buoni regalo"}
@@ -67,11 +74,11 @@ AFFILIATE = [
 
 FOOTER = (
     "\n\n- - - - - - - - - - \n"
-    "ü•∞ Seguici anche su Instagram!\n"
-    "üëâ https://www.instagram.com/dispensa.vintage/\n\n"
+    f"{LOVE} Seguici anche su Instagram!\n"
+    f"{POINT} https://www.instagram.com/dispensa.vintage/\n\n"
     "- - - - - - - - - - \n"
-    "‚û°Ô∏è Scarica l'app per iPhone su App Store\n"
-    "üëâ https://apps.apple.com/it/app/dispensa-vintage/id6754877811"
+    f"{ARROWR} Scarica l'app per iPhone su App Store\n"
+    f"{POINT} https://apps.apple.com/it/app/dispensa-vintage/id6754877811"
 )
 
 def get_token():
@@ -91,7 +98,7 @@ def gql(token, query, variables=None):
 def clip(text, n=180, fallback=""):
     text = " ".join(re.sub("<[^>]+>", " ", text or "").split())
     if len(text) > n:
-        text = text[:n].rsplit(" ", 1)[0] + "‚Ä¶"
+        text = text[:n].rsplit(" ", 1)[0] + "\u2026"
     return text or fallback
 
 # ---------- PRODOTTI NEGOZIO ----------
@@ -124,16 +131,16 @@ def build_product(p):
     desc = clip((p.get("seo") or {}).get("description") or p.get("description"),
                 fallback="Un pezzo vintage selezionato per te.")
     if price and cmp and float(cmp) > float(price):
-        offer = f"üî• In offerta: <s>{float(cmp):.0f}‚Ç¨</s> ‚Üí <b>{float(price):.0f}‚Ç¨</b>"
+        offer = f"{FIRE} In offerta: <s>{float(cmp):.0f}{EUR}</s> {TO} <b>{float(price):.0f}{EUR}</b>"
     elif price:
-        offer = f"üî• Disponibile ora a <b>{float(price):.0f}‚Ç¨</b>"
+        offer = f"{FIRE} Disponibile ora a <b>{float(price):.0f}{EUR}</b>"
     else:
-        offer = "üî• Disponibile ora!"
-    caption = (f"üü• <b>{html.escape(title, quote=False)}</b>\n"
-               f"‚≠ê {html.escape(desc, quote=False)}\n\n"
+        offer = f"{FIRE} Disponibile ora!"
+    caption = (f"{RED} <b>{html.escape(title, quote=False)}</b>\n"
+               f"{STAR} {html.escape(desc, quote=False)}\n\n"
                f"{offer}\n"
-               f"‚úÖ {url}" + FOOTER)
-    return caption, img, ("üí• Vedi su Dispensa Vintage üí•", url)
+               f"{CHECK} {url}" + FOOTER)
+    return caption, img, (f"{BOOM} Vedi su Dispensa Vintage {BOOM}", url)
 
 # ---------- GUIDE BLOG ----------
 def pick_guide(token):
@@ -158,11 +165,11 @@ def build_guide(a):
     url = f"{SITE}/blogs/{a['blog']['handle']}/{a['handle']}"
     img = (a.get("image") or {}).get("url")
     summ = clip(a.get("summary"), fallback="Un approfondimento dal nostro blog vintage.")
-    caption = (f"üìñ <b>{html.escape(title, quote=False)}</b>\n"
-               f"‚≠ê {html.escape(summ, quote=False)}\n\n"
-               f"üìö Leggi la guida completa sul blog üëá\n"
-               f"‚úÖ {url}" + FOOTER)
-    return caption, img, ("üìñ Leggi la guida", url)
+    caption = (f"{BOOK} <b>{html.escape(title, quote=False)}</b>\n"
+               f"{STAR} {html.escape(summ, quote=False)}\n\n"
+               f"{BOOKS} Leggi la guida completa sul blog {DOWN}\n"
+               f"{CHECK} {url}" + FOOTER)
+    return caption, img, (f"{BOOK} Leggi la guida", url)
 
 # ---------- PRODOTTI AFFILIATI AMAZON ----------
 def pick_affiliate():
@@ -170,13 +177,13 @@ def pick_affiliate():
     return {"title": name, "benefit": benefit, "url": url}
 
 def build_affiliate(a):
-    caption = (f"üõí <b>{html.escape(a['title'], quote=False)}</b>\n"
-               f"‚≠ê {html.escape(a['benefit'], quote=False)}\n\n"
-               f"üí° Prezzo e disponibilita cambiano spesso su Amazon: controlla l'offerta attuale üëá\n"
-               f"‚úÖ {a['url']}\n"
-               f"<i>üîñ Link affiliato Amazon</i>" + FOOTER)
+    caption = (f"{CART} <b>{html.escape(a['title'], quote=False)}</b>\n"
+               f"{STAR} {html.escape(a['benefit'], quote=False)}\n\n"
+               f"{BULB} Prezzo e disponibilita cambiano spesso su Amazon: controlla l'offerta attuale {DOWN}\n"
+               f"{CHECK} {a['url']}\n"
+               f"<i>{BMARK} Link affiliato Amazon</i>" + FOOTER)
     # img=None -> sendMessage con anteprima automatica (immagine presa da Amazon in modo conforme)
-    return caption, None, ("üõí Acquista su Amazon", a['url'])
+    return caption, None, (f"{CART} Acquista su Amazon", a['url'])
 
 # ---------- TELEGRAM ----------
 def tg(method, payload):
