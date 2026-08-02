@@ -22,7 +22,7 @@ RED    = "\U0001F7E5"; STAR  = "\U00002B50"; FIRE  = "\U0001F525"; CHECK = "\U00
 BOOM   = "\U0001F4A5"; BOOK  = "\U0001F4D6"; BOOKS = "\U0001F4DA"; CART  = "\U0001F6D2"
 BULB   = "\U0001F4A1"; BMARK = "\U0001F516"; LOVE  = "\U0001F970"; POINT = "\U0001F449"
 DOWN   = "\U0001F447"; ARROWR = "\U000027A1\U0000FE0F"; EUR = "\U000020AC"; TO = "\U00002192"
-GIFT   = "\U0001F381"; EYES = "\U0001F440"; TROPHY = "\U0001F3C6"; BRICK = "\U0001F9F1"
+GIFT   = "\U0001F381"; EYES = "\U0001F440"; TROPHY = "\U0001F3C6"; BRICK = "\U0001F9F1"; SIREN = "\U0001F6A8"
 
 # titoli-hook per i post LEGO (onesti: consiglio/opinione, NON claim su prezzo/scorte/offerte)
 LEGO_HEADERS = [
@@ -32,6 +32,44 @@ LEGO_HEADERS = [
     f"{FIRE} PEZZO DA AVERE IN COLLEZIONE",
     f"{EYES} DAI UN'OCCHIATA SU AMAZON",
 ]
+
+# titoli a TEMA (dicono solo il tipo di LEGO, non affermano prezzi/sconti -> conformi). Usati ~45% dei post.
+_ATTN = [FIRE, STAR, BRICK, SIREN, TROPHY]
+_THEMES = [
+    (["one piece"], "LEGO ONE PIECE"),
+    (["star wars", "morte nera"], "LEGO STAR WARS"),
+    (["signore degli anelli", "sauron"], "LEGO IL SIGNORE DEGLI ANELLI"),
+    (["harry potter"], "LEGO HARRY POTTER"),
+    (["jurassic"], "LEGO JURASSIC WORLD"),
+    (["minecraft"], "LEGO MINECRAFT"),
+    (["ritorno al futuro", "delorean"], "LEGO RITORNO AL FUTURO"),
+    (["super mario", "game boy"], "LEGO SUPER MARIO"),
+    (["saetta mcqueen"], "LEGO CARS"),
+    (["stitch", "disney"], "LEGO DISNEY"),
+    (["snoopy", "peanuts"], "SNOOPY - LEGO IDEAS"),
+    (["funko"], "FUNKO POP"),
+    (["pokemon", "rayquaza", "eevee"], "LEGO POKEMON"),
+    (["ferrari"], "LEGO FERRARI"),
+    (["mercedes"], "LEGO FORMULA 1"),
+    (["speed champions", "hoonicorn", "mustang", "porsche", "lamborghini", "bmw"], "LEGO SPEED CHAMPIONS"),
+    (["technic"], "LEGO TECHNIC"),
+    (["botanicals", "orchidea", "bonsai", "girasoli", "margherite", "bambu", "ninfee", "funghi", "fiori"], "LEGO BOTANICALS"),
+    (["architecture", "parigi", "fontana di trevi"], "LEGO ARCHITECTURE"),
+    (["lego art"], "LEGO ART"),
+    (["city"], "LEGO CITY"),
+    (["creator"], "LEGO CREATOR"),
+    (["icons"], "LEGO ICONS"),
+    (["classic"], "LEGO CLASSIC"),
+]
+
+def lego_header(title):
+    t = (title or "").lower()
+    for kws, label in _THEMES:
+        if any(k in t for k in kws):
+            if random.random() < 0.45:
+                return f"{random.choice(_ATTN)} {label}!"
+            break
+    return random.choice(LEGO_HEADERS)
 
 # --- esclusioni prodotti ---
 EXCLUDE_TYPES = {"Negozi vintage", "Annuncio privato", "Annunci", "Buoni regalo"}
@@ -99,6 +137,48 @@ LEGO_AFFILIATE = [
     ("LEGO Casco Lewis Hamilton Scuderia Ferrari F1 (43022)", "Il casco di Hamilton in mattoncini con minifigure da collezione. Per i fan della F1.", "https://link.amazon/B03TkiLyx", _AIMG.format("B0FPXFB54W")),
     ("LEGO Icons Signore degli Anelli - Elmo di Sauron (11373)", "L'elmo di Sauron con l'Unico Anello e una minifigure. Per i fan della saga.", "https://link.amazon/B0fEbjIDU", _AIMG.format("B01N4NJ3HX")),
     ("LEGO DeLorean Ritorno al Futuro (77256)", "La macchina del tempo con Doc Brown e Marty McFly. Per i fan del film.", "https://link.amazon/B0ioBsbUT", _AIMG.format("B0FPXDXXYR")),
+    ("LEGO Classic Scatola Mattoncini Creativi Media (10696)", "Tanti pezzi per costruire fiori, macchine, animali e altro. Ottima idea regalo per bambini.", "https://link.amazon/B0bGioo7k", _AIMG.format("B00NVDP3ZU")),
+    ("LEGO Botanicals Mini-Orchidea (10343)", "Mini orchidea in mattoncini con vaso: decora senza acqua ne cure.", "https://link.amazon/B01jYm8IS", _AIMG.format("B01N6CJ1QW")),
+    ("LEGO Icons Ferrari F2004 di Michael Schumacher (11375)", "La F1 di Schumacher con motore V10 e minifigure del pilota. Per i fan della Ferrari.", "https://link.amazon/B0g1pwT5w", _AIMG.format("B0FPXDC8V2")),
+    ("LEGO Star Wars Morte Nera UCS (75419)", "La Morte Nera UCS con 36 minifigure (Luke, Han, Vader). Pezzo da collezione per i fan.", "https://link.amazon/B0hKVFPop", _AIMG.format("B0FPXFMGVT")),
+    ("LEGO Creator 3in1 Autocarro con Elicottero (31146)", "3 modelli in 1: camion, aereo cisterna o auto da corsa. Per bambini da 7 anni.", "https://link.amazon/B05qrVWcu", _AIMG.format("B0CFVYPKGB")),
+    ("LEGO Botanicals Margherite (11508)", "Bouquet di margherite e lavanda in mattoncini per decorare. Idea regalo.", "https://link.amazon/B05CrMhro", _AIMG.format("B0FPXDY3X2")),
+    ("LEGO Ideas Peanuts - La Cuccia di Snoopy (21368)", "Snoopy e Woodstock in mattoncini da esporre. Per gli amanti dei fumetti.", "https://link.amazon/B05S1SpjU", _AIMG.format("B0FPXDDTDB")),
+    ("LEGO Creator 3in1 Space Shuttle (31134)", "3 modelli in 1: navetta, astronauta e astronave. Per bambini da 6 anni.", "https://link.amazon/B09uernE9", _AIMG.format("B0BBRYHTPS")),
+    ("LEGO Botanicals Bambu del Buon Auspicio (10344)", "Il bambu della fortuna in mattoncini con vaso: decora casa o ufficio.", "https://link.amazon/B06F7QO4c", _AIMG.format("B01N9D9U4O")),
+    ("LEGO City Inseguimento del Motoscafo della Polizia (60456)", "2 barche, 3 minifigure e uno squalo. Gioco per bambini da 6 anni.", "https://link.amazon/B06zRIYeg", _AIMG.format("B0DWDQGXLF")),
+    ("LEGO Technic Ferrari FXX K (42212)", "Auto da corsa con motore V12 e pistoni mobili, da gioco ed esposizione.", "https://link.amazon/B019tS0YM", _AIMG.format("B0DWDRX69Q")),
+    ("LEGO City Fuoristrada 4x4 di Montagna (60447)", "Il fuoristrada 4x4 con minifigure e accessori. Gioco per bambini da 6 anni.", "https://link.amazon/B0eHJOfpR", _AIMG.format("B0DHSFQWFC")),
+    ("LEGO Botanicals Bouquet di Girasoli (11502)", "Girasoli finti ed eucalipto in mattoncini per decorare. Idea regalo.", "https://link.amazon/B0aRsdq10", _AIMG.format("B0FPXGD4DQ")),
+    ("LEGO Botanicals Orchidea (10311)", "L'orchidea in mattoncini con vaso: elegante e senza manutenzione.", "https://link.amazon/B0cMdL7aL", _AIMG.format("B09BNV2Q49")),
+    ("LEGO Speed Champions Ferrari SF90 XX (77254)", "La Ferrari sportiva stradale con minifigure. Idea regalo per i fan dei motori.", "https://link.amazon/B07F3yY6G", _AIMG.format("B0FPXK52K8")),
+    ("LEGO Creator 3in1 Animali Selvatici - Ragno (31159)", "Ragno trasformabile in scorpione o serpente. Gioco creativo per bambini da 7 anni.", "https://link.amazon/B0imMnZqe", _AIMG.format("B0DHSFJQK5")),
+    ("LEGO Speed Champions Ford Mustang Hoonicorn di Ken Block (77262)", "La leggendaria Mustang Hoonicorn con minifigure. Per i fan del motorsport.", "https://link.amazon/B0inO6tQ9", _AIMG.format("B0FPXGKBCS")),
+    ("LEGO Gatto della Fortuna (40813)", "Il gatto della fortuna con zampa che saluta e moneta d'oro, da esporre.", "https://link.amazon/B08iDD7EM", _AIMG.format("B0DTVS54FX")),
+    ("LEGO Botanicals Funghi del Bosco (11505)", "Funghi e fiori artificiali in mattoncini per decorare. Idea regalo fai da te.", "https://link.amazon/B0fUQ6oL0", _AIMG.format("B0FPXH5T6S")),
+    ("LEGO City Pit Stop Ferrari F1 (60443)", "Officina con monoposto Ferrari F1, minifigure e accessori. Per bambini da 6 anni.", "https://link.amazon/B0eJjdDQf", _AIMG.format("B0DHSHH218")),
+    ("LEGO Art LOVE di Robert Indiana (31214)", "L'iconica scultura pop LOVE in mattoncini. Idea regalo per fidanzamento e anniversario.", "https://link.amazon/B0jdUJAaK", _AIMG.format("B0DHSDWG2R")),
+    ("LEGO Architecture Parigi (21064)", "Parigi con la Torre Eiffel in mattoncini, da parete o scrivania. Idea regalo.", "https://link.amazon/B08UIZKBT", _AIMG.format("B0FPXJ7MGT")),
+    ("LEGO Creator 3in1 Tucano Tropicale (31173)", "Si trasforma in farfalla o pesce tropicale. Gioco creativo per bambini da 7 anni.", "https://link.amazon/B04pGIUkS", _AIMG.format("B0DWDZ44TK")),
+    ("LEGO Speed Champions Porsche 911 GT3 RS (77239)", "La supercar Porsche con minifigure del pilota. Idea regalo per i fan dei motori.", "https://link.amazon/B0gFE754L", _AIMG.format("B0DWF1S7NT")),
+    ("LEGO City Barca Antincendio dei Vigili del Fuoco (60373)", "Nave galleggiante con gommone di salvataggio e minifigure. Per bambini.", "https://link.amazon/B02GTBcZd", _AIMG.format("B0BBRXB8S8")),
+    ("LEGO Harry Potter Ford Anglia Volante (76424)", "L'auto volante con minifigure di Ron ed Edvige. Per i fan di Harry Potter.", "https://link.amazon/B037kbOsF", _AIMG.format("B0CFW21MG7")),
+    ("LEGO Speed Champions Saetta McQueen (77255)", "La macchina di Cars in mattoncini. Idea regalo per i fan del film Pixar.", "https://link.amazon/B00CTIEPU", _AIMG.format("B0FPXCYXHM")),
+    ("LEGO Pokemon Rayquaza (72168)", "Il drago Rayquaza con minifigure dell'allenatrice e Ultra Ball. Per i fan Pokemon.", "https://link.amazon/B00KdnlbT", None),
+    ("LEGO Pokemon Eevee (72151)", "Eevee con arti, orecchie e coda snodabili. Da esporre per i fan Pokemon.", "https://link.amazon/B08MKyrMl", None),
+    ("LEGO Botanicals Piantine Felici (10349)", "2 piantine con facce intercambiabili in mattoncini. Per bambine da 9 anni.", "https://link.amazon/B0bQfVh4m", _AIMG.format("B0DWDRZDZC")),
+    ("LEGO Creator 3in1 Fotocamera Retro (31147)", "Si trasforma in videocamera o TV. Gioco creativo per bambini da 8 anni.", "https://link.amazon/B01BGr61p", _AIMG.format("B0CFW1CWHW")),
+    ("LEGO Botanicals Ninfee (11511)", "Ninfee in mattoncini in 2 vasi trasparenti. Decorazione fai da te.", "https://link.amazon/B06yCcD5Y", _AIMG.format("B0FPXL53FK")),
+    ("LEGO Jurassic World Fossili Triceratopo (77985)", "Il fossile di dinosauro con minifigure. Per i fan di Jurassic Park.", "https://link.amazon/B0i64CRxI", _AIMG.format("B0FPXJL3QZ")),
+    ("LEGO Architecture Fontana di Trevi (21062)", "La Fontana di Trevi in mattoncini da collezione. Idea regalo.", "https://link.amazon/B08QaumNF", _AIMG.format("B0DHSD22WP")),
+    ("LEGO Art Paesaggio Ciliegi Giapponesi (31218)", "Quadro 3D con Monte Fuji e sakura in cornice. Idea regalo per adulti.", "https://link.amazon/B08fHtUBx", _AIMG.format("B0FPXFJKPN")),
+    ("LEGO One Piece Baratie Ristorante Galleggiante (75640)", "Il Baratie con 10 minifigure tra cui Luffy, Nami e Sanji. Per i fan degli anime.", "https://link.amazon/B01bI4rSV", _AIMG.format("B0DWDR21CF")),
+    ("LEGO Technic Pianeta Terra e Luna in Orbita (42179)", "Il sistema solare con rotazione dei pianeti. Gioco spaziale per bambini da 10 anni.", "https://link.amazon/B02jkLnAd", _AIMG.format("B0CFVYHXV5")),
+    ("LEGO Icons Bici da Corsa (11380)", "La bici da corsa in mattoncini con dettagli realistici. Per gli appassionati di ciclismo.", "https://link.amazon/B077eTGdE", _AIMG.format("B01N10IAFG")),
+    ("LEGO City Scavatrice da Cantiere (60480)", "Scavatrice gialla con braccio funzionante e minifigure. Per bambini da 7 anni.", "https://link.amazon/B0cY0ICvd", _AIMG.format("B0FPXHZZFF")),
+    ("LEGO One Piece Villaggio Foosha (75636)", "La capanna di Foosha con Luffy, Shanks e Makino. Per i fan di One Piece.", "https://link.amazon/B03qm4HDz", _AIMG.format("B0DWDRZQYP")),
+    ("LEGO Minecraft Creeper (21276)", "Il Creeper snodabile con scomparto segreto. Per i fan di Minecraft.", "https://link.amazon/B08UaIQgP", _AIMG.format("B0DWDRZQYB")),
+    ("LEGO Disney Stitch (43249)", "Stitch con cono gelato e fiore, da gioco ed esposizione. Per i fan di Lilo e Stitch.", "https://link.amazon/B0fKwE37D", _AIMG.format("B0CFVZG5TR")),
 ]
 
 FOOTER = (
@@ -261,7 +341,7 @@ def main():
         print("Nessun contenuto disponibile."); return
 
     if kind == "affiliate":
-        _header = random.choice(LEGO_HEADERS) if mode == "lego" else None
+        _header = lego_header(item["title"]) if mode == "lego" else None
         caption, img, button = build_affiliate(item, footer=("" if mode == "lego" else FOOTER), header=_header)
     elif kind == "guide":
         caption, img, button = build_guide(item)
