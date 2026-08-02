@@ -72,6 +72,23 @@ AFFILIATE = [
     ("Ganci per appendere quadri e targhe pesanti", "Per esporre targhe in metallo in sicurezza, senza cadute.", "https://link.amazon/B03O6iT9i"),
 ]
 
+# --- selezione affiliata LEGO (tag brick067-21 gia incorporato negli short link). Usata con POST_MODE=lego. ---
+LEGO_AFFILIATE = [
+    ("LEGO da collezione - Trofeo ufficiale", "Un pezzo da esposizione per veri appassionati e tifosi.", "https://link.amazon/B0eoxeDcW"),
+    ("Funko POP da collezione", "La figure ideale da mettere in mostra sugli scaffali dei collezionisti.", "https://link.amazon/B0dsDQDWs"),
+    ("LEGO Star Wars (set 75639)", "Set da costruzione Star Wars da montare ed esporre.", "https://link.amazon/B06EO57Xs"),
+    ("LEGO minifigure e set da collezione", "Mattoncini e minifigure per ampliare la tua collezione.", "https://link.amazon/B06aoGIug"),
+    ("LEGO Mercedes-AMG da collezione", "La monoposto in mattoncini, da costruire e mettere in vetrina.", "https://link.amazon/B08t610eD"),
+    ("LEGO Icons Botanicals 2024", "Composizione floreale in mattoncini: decora casa senza manutenzione.", "https://link.amazon/B00091OUL"),
+    ("LEGO Botanicals - fiori artificiali", "Fiori in mattoncini per decorare, senza acqua e senza cure.", "https://link.amazon/B02wVyys8"),
+    ("LEGO Super Mario (per adulti)", "Set da costruzione e gioco per i fan di Super Mario.", "https://link.amazon/B0hgP3Igl"),
+    ("LEGO Technic Ferrari SF-24", "Modello dettagliato della monoposto di Formula 1 da costruire.", "https://link.amazon/B0dMJSCpk"),
+    ("LEGO Botanicals Bonsai - Acero giapponese", "Un bonsai in mattoncini, decorativo e sempre in forma.", "https://link.amazon/B0aScKUsS"),
+    ("LEGO set da costruzione (43022)", "Set LEGO da montare ed esporre, ottima idea regalo.", "https://link.amazon/B03TkiLyx"),
+    ("LEGO Icons da esposizione (11373)", "Set Icons per adulti, perfetto da costruire e mostrare.", "https://link.amazon/B0fEbjIDU"),
+    ("LEGO DeLorean Ritorno al Futuro", "La mitica auto del film in mattoncini, da costruire ed esporre.", "https://link.amazon/B0ioBsbUT"),
+]
+
 FOOTER = (
     "\n\n- - - - - - - - - - \n"
     f"{LOVE} Seguici anche su Instagram!\n"
@@ -176,12 +193,16 @@ def pick_affiliate():
     name, benefit, url = random.choice(AFFILIATE)
     return {"title": name, "benefit": benefit, "url": url}
 
-def build_affiliate(a):
+def pick_lego():
+    name, benefit, url = random.choice(LEGO_AFFILIATE)
+    return {"title": name, "benefit": benefit, "url": url}
+
+def build_affiliate(a, footer=FOOTER):
     caption = (f"{CART} <b>{html.escape(a['title'], quote=False)}</b>\n"
                f"{STAR} {html.escape(a['benefit'], quote=False)}\n\n"
                f"{BULB} Prezzo e disponibilita cambiano spesso su Amazon: controlla l'offerta attuale {DOWN}\n"
                f"{CHECK} {a['url']}\n"
-               f"<i>{BMARK} Link affiliato Amazon</i>" + FOOTER)
+               f"<i>{BMARK} Link affiliato Amazon</i>" + footer)
     # img=None -> sendMessage con anteprima automatica (immagine presa da Amazon in modo conforme)
     return caption, None, (f"{CART} Acquista su Amazon", a['url'])
 
@@ -208,12 +229,14 @@ def send(chat, caption, img, button, preview_url=None):
     return tg("sendMessage", payload)
 
 def main():
-    token = get_token()
     mode = os.environ.get("POST_MODE", "")
     kind, item = None, None
     if mode == "affiliate":
         item = pick_affiliate(); kind = "affiliate"
+    elif mode == "lego":
+        item = pick_lego(); kind = "affiliate"
     else:
+        token = get_token()  # serve solo per prodotti/guide (Shopify)
         if random.random() < GUIDE_PROB:
             item = pick_guide(token)
             if item: kind = "guide"
@@ -224,7 +247,7 @@ def main():
         print("Nessun contenuto disponibile."); return
 
     if kind == "affiliate":
-        caption, img, button = build_affiliate(item)
+        caption, img, button = build_affiliate(item, footer=("" if mode == "lego" else FOOTER))
     elif kind == "guide":
         caption, img, button = build_guide(item)
     else:
@@ -234,10 +257,12 @@ def main():
         print(f"--- DRY_RUN [{kind}] -> {item['title']} ---\n{caption}\n(img: {img})\n(button: {button})")
         return
 
-    chat = os.environ["TELEGRAM_CHANNEL"]
     preview = item["url"] if kind == "affiliate" else None
-    r = send(chat, caption, img, button, preview)
-    print("OK" if r.get("ok") else "ERRORE", f"[{kind}] ->", item["title"], "| tg:", r.get("ok"), r.get("description", ""))
+    # TELEGRAM_CHANNEL puo' contenere piu' canali separati da virgola -> posta a tutti
+    chats = [c.strip() for c in os.environ["TELEGRAM_CHANNEL"].split(",") if c.strip()]
+    for chat in chats:
+        r = send(chat, caption, img, button, preview)
+        print("OK" if r.get("ok") else "ERRORE", f"[{kind}] {chat} ->", item["title"], "| tg:", r.get("ok"), r.get("description", ""))
 
 if __name__ == "__main__":
     main()
