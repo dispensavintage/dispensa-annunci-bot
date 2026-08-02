@@ -22,6 +22,16 @@ RED    = "\U0001F7E5"; STAR  = "\U00002B50"; FIRE  = "\U0001F525"; CHECK = "\U00
 BOOM   = "\U0001F4A5"; BOOK  = "\U0001F4D6"; BOOKS = "\U0001F4DA"; CART  = "\U0001F6D2"
 BULB   = "\U0001F4A1"; BMARK = "\U0001F516"; LOVE  = "\U0001F970"; POINT = "\U0001F449"
 DOWN   = "\U0001F447"; ARROWR = "\U000027A1\U0000FE0F"; EUR = "\U000020AC"; TO = "\U00002192"
+GIFT   = "\U0001F381"; EYES = "\U0001F440"; TROPHY = "\U0001F3C6"; BRICK = "\U0001F9F1"
+
+# titoli-hook per i post LEGO (onesti: consiglio/opinione, NON claim su prezzo/scorte/offerte)
+LEGO_HEADERS = [
+    f"{BRICK} DA NON PERDERE",
+    f"{TROPHY} TOP PER I COLLEZIONISTI",
+    f"{GIFT} PERFETTA IDEA REGALO",
+    f"{FIRE} PEZZO DA AVERE IN COLLEZIONE",
+    f"{EYES} DAI UN'OCCHIATA SU AMAZON",
+]
 
 # --- esclusioni prodotti ---
 EXCLUDE_TYPES = {"Negozi vintage", "Annuncio privato", "Annunci", "Buoni regalo"}
@@ -73,20 +83,22 @@ AFFILIATE = [
 ]
 
 # --- selezione affiliata LEGO (tag brick067-21 gia incorporato negli short link). Usata con POST_MODE=lego. ---
+# 4o campo = immagine prodotto (Amazon per ASIN) -> foto grande via sendPhoto.
+_AIMG = "https://images-na.ssl-images-amazon.com/images/P/{}.jpg"
 LEGO_AFFILIATE = [
-    ("LEGO da collezione - Trofeo ufficiale", "Un pezzo da esposizione per veri appassionati e tifosi.", "https://link.amazon/B0eoxeDcW"),
-    ("Funko POP da collezione", "La figure ideale da mettere in mostra sugli scaffali dei collezionisti.", "https://link.amazon/B0dsDQDWs"),
-    ("LEGO Star Wars (set 75639)", "Set da costruzione Star Wars da montare ed esporre.", "https://link.amazon/B06EO57Xs"),
-    ("LEGO minifigure e set da collezione", "Mattoncini e minifigure per ampliare la tua collezione.", "https://link.amazon/B06aoGIug"),
-    ("LEGO Mercedes-AMG da collezione", "La monoposto in mattoncini, da costruire e mettere in vetrina.", "https://link.amazon/B08t610eD"),
-    ("LEGO Icons Botanicals 2024", "Composizione floreale in mattoncini: decora casa senza manutenzione.", "https://link.amazon/B00091OUL"),
-    ("LEGO Botanicals - fiori artificiali", "Fiori in mattoncini per decorare, senza acqua e senza cure.", "https://link.amazon/B02wVyys8"),
-    ("LEGO Super Mario (per adulti)", "Set da costruzione e gioco per i fan di Super Mario.", "https://link.amazon/B0hgP3Igl"),
-    ("LEGO Technic Ferrari SF-24", "Modello dettagliato della monoposto di Formula 1 da costruire.", "https://link.amazon/B0dMJSCpk"),
-    ("LEGO Botanicals Bonsai - Acero giapponese", "Un bonsai in mattoncini, decorativo e sempre in forma.", "https://link.amazon/B0aScKUsS"),
-    ("LEGO set da costruzione (43022)", "Set LEGO da montare ed esporre, ottima idea regalo.", "https://link.amazon/B03TkiLyx"),
-    ("LEGO Icons da esposizione (11373)", "Set Icons per adulti, perfetto da costruire e mostrare.", "https://link.amazon/B0fEbjIDU"),
-    ("LEGO DeLorean Ritorno al Futuro", "La mitica auto del film in mattoncini, da costruire ed esporre.", "https://link.amazon/B0ioBsbUT"),
+    ("LEGO da collezione - Trofeo ufficiale", "Un pezzo da esposizione per veri appassionati e tifosi.", "https://link.amazon/B0eoxeDcW", _AIMG.format("B0FPXDRR63")),
+    ("Funko POP da collezione", "La figure ideale da mettere in mostra sugli scaffali dei collezionisti.", "https://link.amazon/B0dsDQDWs", _AIMG.format("B0BSNV3F6J")),
+    ("LEGO Star Wars (set 75639)", "Set da costruzione Star Wars da montare ed esporre.", "https://link.amazon/B06EO57Xs", _AIMG.format("B0DWDQYB87")),
+    ("LEGO minifigure e set da collezione", "Mattoncini e minifigure per ampliare la tua collezione.", "https://link.amazon/B06aoGIug", _AIMG.format("B0DHSBBV6R")),
+    ("LEGO Mercedes-AMG da collezione", "La monoposto in mattoncini, da costruire e mettere in vetrina.", "https://link.amazon/B08t610eD", _AIMG.format("B0DHS9Y433")),
+    ("LEGO Icons Botanicals 2024", "Composizione floreale in mattoncini: decora casa senza manutenzione.", "https://link.amazon/B00091OUL", _AIMG.format("B00CALQB1E")),
+    ("LEGO Botanicals - fiori artificiali", "Fiori in mattoncini per decorare, senza acqua e senza cure.", "https://link.amazon/B02wVyys8", _AIMG.format("B08G4PCG8F")),
+    ("LEGO Super Mario (per adulti)", "Set da costruzione e gioco per i fan di Super Mario.", "https://link.amazon/B0hgP3Igl", _AIMG.format("B0DWDGVHM6")),
+    ("LEGO Technic Ferrari SF-24", "Modello dettagliato della monoposto di Formula 1 da costruire.", "https://link.amazon/B0dMJSCpk", _AIMG.format("B0DHSCYDL2")),
+    ("LEGO Botanicals Bonsai - Acero giapponese", "Un bonsai in mattoncini, decorativo e sempre in forma.", "https://link.amazon/B0aScKUsS", _AIMG.format("B0DWF6VKYB")),
+    ("LEGO set da costruzione (43022)", "Set LEGO da montare ed esporre, ottima idea regalo.", "https://link.amazon/B03TkiLyx", _AIMG.format("B0FPXFB54W")),
+    ("LEGO Icons da esposizione (11373)", "Set Icons per adulti, perfetto da costruire e mostrare.", "https://link.amazon/B0fEbjIDU", _AIMG.format("B01N4NJ3HX")),
+    ("LEGO DeLorean Ritorno al Futuro", "La mitica auto del film in mattoncini, da costruire ed esporre.", "https://link.amazon/B0ioBsbUT", _AIMG.format("B0FPXDXXYR")),
 ]
 
 FOOTER = (
@@ -194,17 +206,19 @@ def pick_affiliate():
     return {"title": name, "benefit": benefit, "url": url}
 
 def pick_lego():
-    name, benefit, url = random.choice(LEGO_AFFILIATE)
-    return {"title": name, "benefit": benefit, "url": url}
+    name, benefit, url, img = random.choice(LEGO_AFFILIATE)
+    return {"title": name, "benefit": benefit, "url": url, "image": img}
 
-def build_affiliate(a, footer=FOOTER):
-    caption = (f"{CART} <b>{html.escape(a['title'], quote=False)}</b>\n"
+def build_affiliate(a, footer=FOOTER, header=None):
+    head = f"<b>{header}</b>\n\n" if header else ""
+    caption = (head +
+               f"{CART} <b>{html.escape(a['title'], quote=False)}</b>\n"
                f"{STAR} {html.escape(a['benefit'], quote=False)}\n\n"
                f"{BULB} Prezzo e disponibilita cambiano spesso su Amazon: controlla l'offerta attuale {DOWN}\n"
                f"{CHECK} {a['url']}\n"
                f"<i>{BMARK} Link affiliato Amazon</i>" + footer)
-    # img=None -> sendMessage con anteprima automatica (immagine presa da Amazon in modo conforme)
-    return caption, None, (f"{CART} Acquista su Amazon", a['url'])
+    # con immagine -> sendPhoto (foto grande); senza -> anteprima automatica del link
+    return caption, a.get("image"), (f"{CART} ACQUISTA SU AMAZON", a['url'])
 
 # ---------- TELEGRAM ----------
 def tg(method, payload):
@@ -247,7 +261,8 @@ def main():
         print("Nessun contenuto disponibile."); return
 
     if kind == "affiliate":
-        caption, img, button = build_affiliate(item, footer=("" if mode == "lego" else FOOTER))
+        _header = random.choice(LEGO_HEADERS) if mode == "lego" else None
+        caption, img, button = build_affiliate(item, footer=("" if mode == "lego" else FOOTER), header=_header)
     elif kind == "guide":
         caption, img, button = build_guide(item)
     else:
