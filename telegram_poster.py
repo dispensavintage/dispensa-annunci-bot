@@ -86,19 +86,19 @@ AFFILIATE = [
 # 4o campo = immagine prodotto (Amazon per ASIN) -> foto grande via sendPhoto.
 _AIMG = "https://images-na.ssl-images-amazon.com/images/P/{}.jpg"
 LEGO_AFFILIATE = [
-    ("LEGO da collezione - Trofeo ufficiale", "Un pezzo da esposizione per veri appassionati e tifosi.", "https://link.amazon/B0eoxeDcW", _AIMG.format("B0FPXDRR63")),
-    ("Funko POP da collezione", "La figure ideale da mettere in mostra sugli scaffali dei collezionisti.", "https://link.amazon/B0dsDQDWs", _AIMG.format("B0BSNV3F6J")),
-    ("LEGO Star Wars (set 75639)", "Set da costruzione Star Wars da montare ed esporre.", "https://link.amazon/B06EO57Xs", _AIMG.format("B0DWDQYB87")),
-    ("LEGO minifigure e set da collezione", "Mattoncini e minifigure per ampliare la tua collezione.", "https://link.amazon/B06aoGIug", _AIMG.format("B0DHSBBV6R")),
-    ("LEGO Mercedes-AMG da collezione", "La monoposto in mattoncini, da costruire e mettere in vetrina.", "https://link.amazon/B08t610eD", _AIMG.format("B0DHS9Y433")),
-    ("LEGO Icons Botanicals 2024", "Composizione floreale in mattoncini: decora casa senza manutenzione.", "https://link.amazon/B00091OUL", _AIMG.format("B00CALQB1E")),
-    ("LEGO Botanicals - fiori artificiali", "Fiori in mattoncini per decorare, senza acqua e senza cure.", "https://link.amazon/B02wVyys8", _AIMG.format("B08G4PCG8F")),
-    ("LEGO Super Mario (per adulti)", "Set da costruzione e gioco per i fan di Super Mario.", "https://link.amazon/B0hgP3Igl", _AIMG.format("B0DWDGVHM6")),
-    ("LEGO Technic Ferrari SF-24", "Modello dettagliato della monoposto di Formula 1 da costruire.", "https://link.amazon/B0dMJSCpk", _AIMG.format("B0DHSCYDL2")),
-    ("LEGO Botanicals Bonsai - Acero giapponese", "Un bonsai in mattoncini, decorativo e sempre in forma.", "https://link.amazon/B0aScKUsS", _AIMG.format("B0DWF6VKYB")),
-    ("LEGO set da costruzione (43022)", "Set LEGO da montare ed esporre, ottima idea regalo.", "https://link.amazon/B03TkiLyx", _AIMG.format("B0FPXFB54W")),
-    ("LEGO Icons da esposizione (11373)", "Set Icons per adulti, perfetto da costruire e mostrare.", "https://link.amazon/B0fEbjIDU", _AIMG.format("B01N4NJ3HX")),
-    ("LEGO DeLorean Ritorno al Futuro", "La mitica auto del film in mattoncini, da costruire ed esporre.", "https://link.amazon/B0ioBsbUT", _AIMG.format("B0FPXDXXYR")),
+    ("LEGO Trofeo Coppa del Mondo FIFA (43020)", "Il trofeo del calcio in mattoncini, da montare ed esporre. Idea regalo per tifosi.", "https://link.amazon/B0eoxeDcW", _AIMG.format("B0FPXDRR63")),
+    ("Funko POP! Pokemon - Charizard", "La figure di Charizard da collezione, perfetta sullo scaffale dei fan Pokemon.", "https://link.amazon/B0dsDQDWs", _AIMG.format("B0BSNV3F6J")),
+    ("LEGO One Piece - Nave Going Merry (75639)", "La nave Going Merry con 5 minifigure tra cui Luffy, Zoro e Nami. Per i fan di One Piece.", "https://link.amazon/B06EO57Xs", _AIMG.format("B0DWDQYB87")),
+    ("LEGO Speed Champions Ferrari F1 SF-24 (77242)", "La monoposto di Formula 1 con minifigure del pilota, da costruire ed esporre.", "https://link.amazon/B06aoGIug", _AIMG.format("B0DHSBBV6R")),
+    ("LEGO Speed Champions Mercedes-AMG F1 W15 (77244)", "La Mercedes di Formula 1 in mattoncini, con minifigure del pilota.", "https://link.amazon/B08t610eD", _AIMG.format("B0DHS9Y433")),
+    ("LEGO Botanicals Albicocco Giapponese (10369)", "Fiore artificiale in mattoncini: decora casa senza acqua e senza cure.", "https://link.amazon/B00091OUL", _AIMG.format("B00CALQB1E")),
+    ("LEGO Botanicals Albero Bonsai (10281)", "Il bonsai in mattoncini con vaso: decorativo e sempre in forma.", "https://link.amazon/B02wVyys8", _AIMG.format("B08G4PCG8F")),
+    ("LEGO Super Mario Game Boy (72046)", "Il Game Boy in mattoncini con cartucce a schermo lenticolare. Regalo retro per i fan dei videogiochi.", "https://link.amazon/B0hgP3Igl", _AIMG.format("B0DWDGVHM6")),
+    ("LEGO Technic Ferrari F1 SF-24 scala 1:8 (42207)", "Modello dettagliato in scala 1:8 con motore V6, cambio, sterzo e DRS.", "https://link.amazon/B0dMJSCpk", _AIMG.format("B0DHSCYDL2")),
+    ("LEGO Botanicals Bonsai Acero Rosso Giapponese (10348)", "Bonsai con foglie rosse e arancio e vaso costruibile, da esporre.", "https://link.amazon/B0aScKUsS", _AIMG.format("B0DWF6VKYB")),
+    ("LEGO Casco Lewis Hamilton Scuderia Ferrari F1 (43022)", "Il casco di Hamilton in mattoncini con minifigure da collezione. Per i fan della F1.", "https://link.amazon/B03TkiLyx", _AIMG.format("B0FPXFB54W")),
+    ("LEGO Icons Signore degli Anelli - Elmo di Sauron (11373)", "L'elmo di Sauron con l'Unico Anello e una minifigure. Per i fan della saga.", "https://link.amazon/B0fEbjIDU", _AIMG.format("B01N4NJ3HX")),
+    ("LEGO DeLorean Ritorno al Futuro (77256)", "La macchina del tempo con Doc Brown e Marty McFly. Per i fan del film.", "https://link.amazon/B0ioBsbUT", _AIMG.format("B0FPXDXXYR")),
 ]
 
 FOOTER = (
