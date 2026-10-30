@@ -2,7 +2,7 @@
 """Pinner Pinterest per Dispensa Vintage.
 
 Due cose da pinnare, su board per categoria:
-  - PRODOTTI  -> link alla scheda del negozio (come dal 2026, immagine orizzontale)
+  - PRODOTTI  -> link alla scheda del negozio, con la FOTO NUDA del prodotto
   - ARTICOLI  -> link alla guida sul blog, con un pin VERTICALE 1000x1500
                  composto al volo (pin_grafica.py) e caricato in base64.
 
@@ -199,12 +199,13 @@ def make_pin(token, board_id, p, board_name):
     tags = (HASHTAGS.get(board_name, "#modernariato #oggettivintage") + " " + COMMON_TAGS)
     desc = (f"{p['title']}. Pezzo vintage originale da collezione, disponibile su Dispensa Vintage "
             f"con spedizione in tutta Italia. {tags}")
-    # stesso formato verticale degli articoli: su Pinterest si naviga in miniatura
-    # e una foto prodotto quadrata senza titolo non dice cosa stai guardando.
-    media = _base64_pin(jpg(p["featuredImage"]["url"]), p["title"], "In vendita")
+    # ⛔ I PRODOTTI restano FOTO NUDE, senza pannello ne' titolo sovrimpresso.
+    # Su Pinterest la gente cerca immagini di oggetti: un cartello col titolo
+    # sopra una foto prodotto la fa leggere come pubblicita' e la si scorre.
+    # Gli ARTICOLI invece restano col pannello: li' il titolo E' il contenuto.
     body = {"board_id": board_id, "title": p["title"][:100], "description": desc[:500],
             "link": f"{SITE}/products/{p['handle']}", "alt_text": p["title"][:500],
-            "media_source": media}
+            "media_source": {"source_type": "image_url", "url": jpg(p["featuredImage"]["url"])}}
     return pin_call("POST", "/pins", token, body)
 
 # ---------- raccolta prodotti non pinnati ----------
