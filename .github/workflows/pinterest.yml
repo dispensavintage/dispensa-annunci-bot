@@ -1,0 +1,40 @@
+name: Pinna su Pinterest
+
+# Lanciabile a mano (Actions -> Run workflow) scegliendo cosa pinnare.
+# Lo schedule GitHub e' un backstop: GitHub lo spegne dopo 60 giorni di
+# inattivita' del repo, quindi se riparte dopo una pausa va riabilitato a mano.
+on:
+  workflow_dispatch:
+    inputs:
+      pin_what:
+        description: "Cosa pinnare"
+        type: choice
+        default: articoli
+        options: [articoli, prodotti, misto]
+      pin_batch:
+        description: "Quanti pin in questo giro"
+        default: "8"
+  schedule:
+    - cron: "17 8 * * *"     # ~10:17 IT
+    - cron: "17 16 * * *"    # ~18:17 IT
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Pillow serve solo ai pin degli articoli: compone il 1000x1500 verticale.
+      - run: pip install --quiet "pillow>=10,<12"
+      - name: Pinna un lotto
+        env:
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          PINTEREST_APP_ID: ${{ secrets.PINTEREST_APP_ID }}
+          PINTEREST_APP_SECRET: ${{ secrets.PINTEREST_APP_SECRET }}
+          PINTEREST_REFRESH_TOKEN: ${{ secrets.PINTEREST_REFRESH_TOKEN }}
+          PIN_WHAT: ${{ inputs.pin_what || 'articoli' }}
+          PIN_BATCH: ${{ inputs.pin_batch || '8' }}
+        run: python pinterest_pinner.py
