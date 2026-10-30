@@ -20,7 +20,7 @@ Env richiesti:
   PIN_BATCH (opz., default 20) = quanti pin per run
   PIN_WHAT  (opz., default "articoli") = articoli | prodotti | misto
 """
-import os, io, json, base64, urllib.request, urllib.parse
+import os, io, json, base64, urllib.request, urllib.parse, urllib.error
 
 STORE = os.environ.get("SHOPIFY_STORE", "f64efc-d9.myshopify.com")
 SHOP_API = f"https://{STORE}/admin/api/2025-10/graphql.json"
@@ -129,11 +129,34 @@ def gql(token, query, variables=None):
 
 # ---------- Pinterest ----------
 def pin_token():
-    auth = base64.b64encode(f"{os.environ['PINTEREST_APP_ID']}:{os.environ['PINTEREST_APP_SECRET']}".encode()).decode()
-    data = urllib.parse.urlencode({"grant_type": "refresh_token", "refresh_token": os.environ["PINTEREST_REFRESH_TOKEN"]}).encode()
+    """Rinnova l'access token. Se Pinterest dice di no, il motivo sta nel CORPO
+    della risposta: senza stamparlo un 401 puo' voler dire tre cose diverse."""
+    chiavi = ("PINTEREST_APP_ID", "PINTEREST_APP_SECRET", "PINTEREST_REFRESH_TOKEN")
+    vuoti = [k for k in chiavi if not os.environ.get(k, "").strip()]
+    if vuoti:
+        raise SystemExit("Segreti mancanti o vuoti: " + ", ".join(vuoti))
+    # .strip(): un a capo incollato per sbaglio nel segreto fa fallire la Basic auth
+    app_id, secret, rt = (os.environ[k].strip() for k in chiavi)
+
+    auth = base64.b64encode(f"{app_id}:{secret}".encode()).decode()
+    data = urllib.parse.urlencode({"grant_type": "refresh_token",
+                                   "refresh_token": rt}).encode()
     req = urllib.request.Request(f"{PIN_API}/oauth/token", data=data,
-        headers={"Authorization": "Basic " + auth, "Content-Type": "application/x-www-form-urlencoded"})
-    return json.load(urllib.request.urlopen(req))["access_token"]
+        headers={"Authorization": "Basic " + auth,
+                 "Content-Type": "application/x-www-form-urlencoded"})
+    try:
+        return json.load(urllib.request.urlopen(req, timeout=30))["access_token"]
+    except urllib.error.HTTPError as e:
+        corpo = e.read().decode()[:500]
+        print("=" * 64)
+        print(f"PINTEREST HA RIFIUTATO IL RINNOVO — HTTP {e.code}")
+        print(f"risposta: {corpo}")
+        print(f"misure (non i valori): App ID {len(app_id)} car., "
+              f"App secret {len(secret)} car., refresh token {len(rt)} car.")
+        print("Se parla di client/credenziali  -> App ID o App secret sbagliati.")
+        print("Se parla del refresh token      -> va rigenerato.")
+        print("=" * 64)
+        raise SystemExit(1)
 
 def pin_call(method, path, token, body=None):
     data = json.dumps(body).encode() if body is not None else None
