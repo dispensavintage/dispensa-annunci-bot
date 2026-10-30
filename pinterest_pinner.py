@@ -20,7 +20,7 @@ Env richiesti:
   PIN_BATCH (opz., default 20) = quanti pin per run
   PIN_WHAT  (opz., default "articoli") = articoli | prodotti | misto
 """
-import os, io, json, base64, urllib.request, urllib.parse, urllib.error
+import os, io, re, html, json, base64, urllib.request, urllib.parse, urllib.error
 
 STORE = os.environ.get("SHOPIFY_STORE", "f64efc-d9.myshopify.com")
 SHOP_API = f"https://{STORE}/admin/api/2025-10/graphql.json"
@@ -185,13 +185,26 @@ def jpg(url):
     u = url.split("?")[0]
     return (u + "?width=1080") if u.lower().endswith((".jpg", ".jpeg")) else (u + ".jpg?width=1080")
 
+def _base64_pin(url_immagine, titolo, occhiello):
+    """Compone il pin verticale 1000x1500 e lo restituisce pronto per l'API."""
+    from pin_grafica import componi
+    im = componi(url_immagine, titolo, occhiello, FONT)
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=88, optimize=True)
+    return {"source_type": "image_base64", "content_type": "image/jpeg",
+            "data": base64.b64encode(buf.getvalue()).decode()}
+
+
 def make_pin(token, board_id, p, board_name):
     tags = (HASHTAGS.get(board_name, "#modernariato #oggettivintage") + " " + COMMON_TAGS)
     desc = (f"{p['title']}. Pezzo vintage originale da collezione, disponibile su Dispensa Vintage "
             f"con spedizione in tutta Italia. {tags}")
+    # stesso formato verticale degli articoli: su Pinterest si naviga in miniatura
+    # e una foto prodotto quadrata senza titolo non dice cosa stai guardando.
+    media = _base64_pin(jpg(p["featuredImage"]["url"]), p["title"], "In vendita")
     body = {"board_id": board_id, "title": p["title"][:100], "description": desc[:500],
             "link": f"{SITE}/products/{p['handle']}", "alt_text": p["title"][:500],
-            "media_source": {"source_type": "image_url", "url": jpg(p["featuredImage"]["url"])}}
+            "media_source": media}
     return pin_call("POST", "/pins", token, body)
 
 # ---------- raccolta prodotti non pinnati ----------
@@ -216,6 +229,46 @@ def collect(token, n_needed):
         else:
             break
     return out
+
+# ---------- testo delle descrizioni ----------
+# ⚠️ Il campo «sommario» di 79 articoli su 146 contiene HTML: <meta charset>,
+# data-mce-fragment dell'editor Shopify e, in qualche caso, pezzi di DOM di
+# ChatGPT incollati dentro. Sul sito non si vedono, in una descrizione Pinterest
+# (testo semplice) finivano stampati nudi e si mangiavano i 500 caratteri.
+_TAG = re.compile(r"<[^>]+>")
+_SPAZI = re.compile(r"\s+")
+
+
+def ripulisci(testo):
+    if not testo:
+        return ""
+    t = _TAG.sub(" ", testo)          # via i tag
+    t = html.unescape(t)              # &egrave; -> è
+    t = _SPAZI.sub(" ", t)            # a capo e spazi multipli
+    t = re.sub(r" +([,.;:!?])", r"\1", t)   # «industrial ?» -> «industrial?»
+    return t.strip()
+
+
+def tronca(testo, limite):
+    """Taglia all'ultimo spazio prima del limite: niente parole mozzate."""
+    if len(testo) <= limite:
+        return testo
+    t = testo[:limite]
+    sp = t.rfind(" ")
+    return (t[:sp] if sp > limite * 0.6 else t).rstrip(" ,;:-") + "…"
+
+
+def descrizione_articolo(a, tags):
+    """Titolo + sommario ripulito + hashtag, sempre dentro i 500 caratteri."""
+    titolo = a["title"].strip().rstrip(".")
+    # «...rendila unica!» + «.» faceva «unica!.»
+    punto = "" if titolo.endswith(("!", "?")) else "."
+    sommario = ripulisci(a.get("summary"))
+    if len(sommario) < 25:            # 23 articoli non hanno sommario
+        sommario = "Guida di Dispensa Vintage, con foto e consigli pratici."
+    avanzo = 500 - len(titolo) - len(tags) - 4
+    return f"{titolo}{punto} {tronca(sommario, max(0, avanzo))} {tags}".strip()
+
 
 # ---------- articoli del blog ----------
 # «Come pulire l'ottone» non e' un articolo di arredamento: e' un restauro.
@@ -244,7 +297,7 @@ def collect_articoli(token, n_needed):
         nodes{handle articles(first:250){nodes{
           id title handle isPublished tags summary image{url}
           pinned:metafield(namespace:"custom",key:"pinterest_pinned"){value}}}}}}'''
-    out, cur = [], None
+    per_blog, cur = {}, None
     while True:
         d = gql(token, q, {"c": cur})["data"]["blogs"]
         for b in d["nodes"]:
@@ -253,30 +306,34 @@ def collect_articoli(token, n_needed):
                 if not (a.get("image") or {}).get("url"): continue
                 if (a.get("pinned") or {}).get("value") == "true": continue
                 a["blog"] = b["handle"]
-                out.append(a)
-                if len(out) >= n_needed: return out
+                per_blog.setdefault(b["handle"], []).append(a)
         if not d["pageInfo"]["hasNextPage"]: break
         cur = d["pageInfo"]["endCursor"]
+
+    # A giro fra i blog invece che in fila: altrimenti il primo lotto esce tutto
+    # da «arredamento» e una board sola si riempie mentre le altre restano vuote.
+    # Pinterest premia i profili che si muovono su piu' temi.
+    out, code = [], list(per_blog.values())
+    while code and len(out) < n_needed:
+        for coda in list(code):
+            if not coda:
+                code.remove(coda); continue
+            out.append(coda.pop(0))
+            if len(out) >= n_needed: break
     return out
 
 
 def make_pin_articolo(token, board_id, a, board_name):
     """Compone il pin verticale e lo carica in base64: cosi' non serve ospitare
     l'immagine da nessuna parte."""
-    from pin_grafica import componi
-    im = componi(a["image"]["url"], a["title"], OCCHIELLO.get(a["blog"], "Vintage"), FONT)
-    buf = io.BytesIO()
-    im.save(buf, "JPEG", quality=88, optimize=True)
-    dati = base64.b64encode(buf.getvalue()).decode()
+    media = _base64_pin(a["image"]["url"], a["title"], OCCHIELLO.get(a["blog"], "Vintage"))
 
     tags = HASHTAGS.get(board_name, "#modernariato #oggettivintage") + " " + COMMON_TAGS
-    sommario = (a.get("summary") or "").strip().replace("\n", " ")
-    desc = f"{a['title']}. {sommario} {tags}".replace("  ", " ")
-    body = {"board_id": board_id, "title": a["title"][:100], "description": desc[:500],
+    desc = descrizione_articolo(a, tags)
+    body = {"board_id": board_id, "title": a["title"][:100], "description": desc,
             "link": f"{SITE}/blogs/{a['blog']}/{a['handle']}",
             "alt_text": a["title"][:500],
-            "media_source": {"source_type": "image_base64",
-                             "content_type": "image/jpeg", "data": dati}}
+            "media_source": media}
     return pin_call("POST", "/pins", token, body)
 
 
@@ -310,14 +367,15 @@ def main():
     ptok = pin_token()
     boards = ensure_boards(ptok)
 
-    quota_art = BATCH if MODO == "articoli" else (BATCH // 2 if MODO == "misto" else 0)
-    quota_pro = BATCH - quota_art
+    # "misto": gli articoli hanno la precedenza e i prodotti riempiono il lotto.
+    # Cosi' quando i 146 articoli finiscono il giro continua da solo sui prodotti,
+    # senza che nessuno debba ricordarsi di cambiare impostazione.
+    quota_art = 0 if MODO == "prodotti" else BATCH
+    quota_pro = 0 if MODO == "articoli" else BATCH
 
     articoli = collect_articoli(stok, quota_art) if quota_art else []
-    # solo in "misto" il lotto si ricompone: se gli articoli sono finiti il resto
-    # va ai prodotti. In "articoli" il lotto resta corto, cosi' si vede che e' finito.
     if MODO == "misto":
-        quota_pro += quota_art - len(articoli)
+        quota_pro = BATCH - len(articoli)
     prodotti = collect(stok, quota_pro) if quota_pro > 0 else []
 
     if not articoli and not prodotti:
